@@ -3,25 +3,20 @@ import assert from "assert";
 import * as web3 from "@solana/web3.js";
 import type { GlobalDecentralizedMediaOwnership } from "../target/types/global_decentralized_media_ownership";
 describe("Global Decentralized Media Ownership", () => {
-  // Configure the client to use the local cluster
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.GlobalDecentralizedMediaOwnership as anchor.Program<GlobalDecentralizedMediaOwnership>;
-  
-  // Define mediaKeypair and mediaId at describe level
+
   let mediaKeypair: web3.Keypair;
-  const mediaId = "JHdF";  // Use the same mediaId throughout tests
+  const mediaId = "JHdF";  
 
   it("Initialize Media", async () => {
-    // Generate keypair for the new media account
     mediaKeypair = new web3.Keypair();
 
-    // Test data matching UI inputs
     const title = "ZZWI";
     const creator = program.provider.publicKey;
 
     try {
-      // Send transaction
       const txHash = await program.methods
         .initializeMedia(mediaId, title, creator)
         .accounts({
@@ -34,15 +29,12 @@ describe("Global Decentralized Media Ownership", () => {
       
       console.log(`Use 'solana confirm -v ${txHash}' to see the logs`);
 
-      // Confirm transaction
       await program.provider.connection.confirmTransaction(txHash);
 
-      // Fetch the created account
       const mediaAccount = await program.account.media.fetch(
         mediaKeypair.publicKey
       );
 
-      // Verify the data
       assert(mediaAccount.mediaId === mediaId);
       assert(mediaAccount.title === title);
       assert(mediaAccount.creator.toBase58() === creator.toBase58());
@@ -60,12 +52,10 @@ describe("Global Decentralized Media Ownership", () => {
   });
 
   it("Transfer Ownership", async () => {
-    // Generate a new keypair for the recipient
     const toKeypair = new web3.Keypair();
     const percentage = 47;
 
     try {
-      // Send transaction using the same mediaId as initialization
       const txHash = await program.methods
         .transferOwnership(mediaId, toKeypair.publicKey, percentage)
         .accounts({
@@ -76,15 +66,12 @@ describe("Global Decentralized Media Ownership", () => {
 
       console.log(`Use 'solana confirm -v ${txHash}' to see the logs`);
 
-      // Confirm transaction
       await program.provider.connection.confirmTransaction(txHash);
 
-      // Fetch the updated account
       const mediaAccount = await program.account.media.fetch(
         mediaKeypair.publicKey
       );
 
-      // Verify the transfer
       const toIndex = mediaAccount.owners.findIndex(owner => 
         owner.toBase58() === toKeypair.publicKey.toBase58()
       );
